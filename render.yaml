@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: agdfs
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: OPENTOPO_API_KEY
+        sync: false
+      - key: GRAVITY_COG_URL
+        sync: false  # optional -- raw.githubusercontent.com URL to your converted COG
