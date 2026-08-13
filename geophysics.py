@@ -124,5 +124,5 @@ def clip_gravity(south: float, north: float, west: float, east: float, anomaly_t
         "max": float(data.max()) if data.size else None,
         "mean": float(data.mean()) if data.size else None,
         "values": data.tolist(),
-                                }
-            
+    }
+    
