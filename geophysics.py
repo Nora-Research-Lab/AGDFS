@@ -27,20 +27,33 @@ from rasterio.windows import from_bounds
 MAGNETIC_EXPORT_URL = "https://gis.ngdc.noaa.gov/arcgis/rest/services/EMAG2v3/ImageServer/exportImage"
 
 
+NATIVE_RES_DEG = 2 / 60  # EMAG2v3's real resolution, ~2 arcminutes
+
+
 def clip_magnetic(south: float, north: float, west: float, east: float):
     """Query NOAA's live EMAG2v3 ImageServer directly for a bbox clip.
+
+    Grid size is computed from the bbox relative to EMAG2v3's actual
+    ~2 arcminute resolution, instead of a fixed 256x256 -- requesting
+    more pixels than the source data actually has just returns
+    interpolated filler, not real measurements. Nearest-neighbor (not
+    bilinear) so returned values are the real source pixels, not
+    blended/synthetic ones.
 
     NOAA's server occasionally responds slowly under load, so this retries
     once with a longer timeout before giving up.
     """
+    width = max(2, min(256, round((east - west) / NATIVE_RES_DEG)))
+    height = max(2, min(256, round((north - south) / NATIVE_RES_DEG)))
+
     params = {
         "bbox": f"{west},{south},{east},{north}",
         "bboxSR": 4326,
-        "size": "256,256",
+        "size": f"{width},{height}",
         "format": "tiff",
         "pixelType": "F32",
         "noData": "",
-        "interpolation": "RSP_BilinearInterpolation",
+        "interpolation": "RSP_NearestNeighbor",
         "f": "image",
     }
 
@@ -111,4 +124,5 @@ def clip_gravity(south: float, north: float, west: float, east: float, anomaly_t
         "max": float(data.max()) if data.size else None,
         "mean": float(data.mean()) if data.size else None,
         "values": data.tolist(),
-    }
+                                }
+            
